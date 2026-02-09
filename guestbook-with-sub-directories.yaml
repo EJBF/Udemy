@@ -11,7 +11,7 @@ spec:
   source: 
     path: guestbook-with-sub-directories
     repoURL: "https://github.com/EJBF/Udemy.git"
-    targetRevision: master
+    targetRevision: HEAD
     directory:
       recurse: true
   syncPolicy:
