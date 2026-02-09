@@ -1,52 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "helm-guestbook.fullname" . }}
-  labels:
-    app: {{ template "helm-guestbook.name" . }}
-    chart: {{ template "helm-guestbook.chart" . }}
-    release: {{ .Release.Name }}
-    heritage: {{ .Release.Service }}
+  name: guestbook
 spec:
-  replicas: {{ .Values.replicaCount }}
-  revisionHistoryLimit: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: {{ template "helm-guestbook.name" . }}
-      release: {{ .Release.Name }}
+      app: guestbook
   template:
     metadata:
       labels:
-        app: {{ template "helm-guestbook.name" . }}
-        release: {{ .Release.Name }}
+        app: guestbook
     spec:
       containers:
-        - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-          imagePullPolicy: {{ .Values.image.pullPolicy }}
+        - name: frontend
+          image: "gcr.io/GoogleCloudPlatform/kubernetes-bootcamp/frontend:v1"
           ports:
-            - name: http
-              containerPort: {{ .Values.containerPort }}
-              protocol: TCP
-          livenessProbe:
-            httpGet:
-              path: /
-              port: http
-          readinessProbe:
-            httpGet:
-              path: /
-              port: http
-          resources:
-{{ toYaml .Values.resources | indent 12 }}
-      {{- with .Values.nodeSelector }}
-      nodeSelector:
-{{ toYaml . | indent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
-      affinity:
-{{ toYaml . | indent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
-      tolerations:
-{{ toYaml . | indent 8 }}
-      {{- end }}
+            - containerPort: 80
+        - name: backend
+          image: "gcr.io/GoogleCloudPlatform/kubernetes-bootcamp/backend:v1"
+          ports:
+            - containerPort: 8080
+        - name: redis
+          image: "gcr.io/GoogleCloudPlatform/kubernetes-bootcamp/redis:v1"
+          ports:
+            - containerPort: 6379
