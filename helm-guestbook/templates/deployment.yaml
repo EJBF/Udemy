@@ -1,27 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: guestbook
+  name: {{ template "helm-guestbook.fullname" . }}
+  labels:
+    app: {{ template "helm-guestbook.name" . }}
+    chart: {{ template "helm-guestbook.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
-      app: guestbook
+      app: {{ template "helm-guestbook.name" . }}
+      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        app: guestbook
+        app: {{ template "helm-guestbook.name" . }}
+        release: {{ .Release.Name }}
     spec:
       containers:
-        - name: frontend
-          image: "gcr.io/GoogleCloudPlatform/kubernetes-bootcamp/frontend:v1"
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
-            - containerPort: 80
-        - name: backend
-          image: "gcr.io/GoogleCloudPlatform/kubernetes-bootcamp/backend:v1"
-          ports:
-            - containerPort: 8080
-        - name: redis
-          image: "gcr.io/GoogleCloudPlatform/kubernetes-bootcamp/redis:v1"
-          ports:
-            - containerPort: 6379
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
